@@ -6,7 +6,14 @@
     <description>Recent content in Posts on TAOS Labs</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate></lastBuildDate>
+    <lastBuildDate>Fri, 18 Apr 2025 18:26:52 -0500</lastBuildDate>
     <atom:link href="https://taos-labs.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SD Cards</title>
+      <link>https://taos-labs.dev/posts/sd-cards/</link>
+      <pubDate>Fri, 18 Apr 2025 18:26:52 -0500</pubDate>
+      <guid>https://taos-labs.dev/posts/sd-cards/</guid>
+      <description>Why have an EMMC at all When we started with TAOS we were trying to run on x86 laptops. The one we had focused on was a laptop that had eMMC storage, so since eMMC is basically a fancy SD card, The first thing I worked on was an SD card driver that could read and write blocks to unblock the file system people.&#xA;Setting Up the driver </description>
+    </item>
   </channel>
 </rss>

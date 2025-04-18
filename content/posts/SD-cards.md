@@ -1,7 +1,7 @@
 +++
 title = 'SD Cards'
 date = 2025-04-18T18:26:52-05:00
-draft = true
+draft = false 
 +++
 
 ## Why have an EMMC at all
