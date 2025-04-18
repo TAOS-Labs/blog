@@ -1,0 +1,4 @@
+baseURL = 'https://taos-labs.dev/'
+languageCode = 'en-us'
+title = 'TAOS Labs'
+theme = 'ananke'
