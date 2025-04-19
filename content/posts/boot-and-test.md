@@ -1,7 +1,7 @@
 +++
 title = 'Boot and Test'
 date = 2025-04-19T17:02:28-05:00
-draft = true
+draft = false
 +++
 
 ## And We're Live!
@@ -418,3 +418,6 @@ It's, for the most part, pretty straightforward:
 
 Apart from it not being terribly exciting, we require no complex synchronization primitives besides atomics.
 
+{{< aside >}}
+That `bsp_lapic_id`, by the way, is the Local Advanced Programmable Interrupt Controller [(LAPIC)](https://wiki.osdev.org/APIC) ID for the Bootstrap Processor — essentially a unique identifier for the primary core that's handling the boot process...
+{{< /aside >}}
