@@ -2,32 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on TAOS Labs</title>
-    <link>http://localhost:1313/posts/</link>
+    <link>https://taos-labs.dev/posts/</link>
     <description>Recent content in Posts on TAOS Labs</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 19 Apr 2025 17:02:28 -0500</lastBuildDate>
-    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://taos-labs.dev/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Boot and Test</title>
-      <link>http://localhost:1313/posts/boot-and-test/</link>
+      <link>https://taos-labs.dev/posts/boot-and-test/</link>
       <pubDate>Sat, 19 Apr 2025 17:02:28 -0500</pubDate>
-      <guid>http://localhost:1313/posts/boot-and-test/</guid>
+      <guid>https://taos-labs.dev/posts/boot-and-test/</guid>
       <description>And We&amp;rsquo;re Live! I remember how this madness began. I had just finished speaking with Dr. Gheith and learned that we would receive no starter code. None. Zero. Nil. Naturally, my first question was, how do we boot?&#xA;I had previously taken CS439 with Dr. Norman, and while we did briefly - for a whole of five minutes - discuss how operating systems begin their lifecycle, it was by far not enough knowledge to go out and write ourselves a bootloader from scratch.</description>
     </item>
     <item>
       <title>SD Cards</title>
-      <link>http://localhost:1313/posts/sd-cards/</link>
+      <link>https://taos-labs.dev/posts/sd-cards/</link>
       <pubDate>Fri, 18 Apr 2025 18:26:52 -0500</pubDate>
-      <guid>http://localhost:1313/posts/sd-cards/</guid>
+      <guid>https://taos-labs.dev/posts/sd-cards/</guid>
       <description>Why have an EMMC at all When we started with TAOS we were trying to run on x86 laptops. The one we had focused on was a laptop that had eMMC storage, so since eMMC is basically a fancy SD card, The first thing I worked on was an SD card driver that could read and write blocks to unblock the file system people.&#xA;Setting Up the driver </description>
-    </item>
-    <item>
-      <title>TAOS Overview</title>
-      <link>http://localhost:1313/posts/taos-overview/</link>
-      <pubDate>Fri, 18 Apr 2025 18:26:52 -0500</pubDate>
-      <guid>http://localhost:1313/posts/taos-overview/</guid>
-      <description>TAOS - Totally Awesome Operating System Is a distributed operating system designed by University of Texas Austin Computer Science students as a project for CS 378: Multicore Operating Systems. Designed for x86 architecture this system is designed to support processes spawning processes on linked remote hosts running TAOS. The system abstracts the distributed nature of the processes from the end-user without requiring any action on their part. To this end TAOS will automatically handle the distribution of memory and the filesystem, while also deciding when to route IPC to a remote host.</description>
     </item>
   </channel>
 </rss>
