@@ -240,9 +240,11 @@ void kmain(uint32_t magic, uint32_t addr) {
 
 The Limine [specification](https://github.com/limine-bootloader/limine/blob/trunk/PROTOCOL.md), by the way, offers way more out-of-the-box than the above GRUB code. For instance, it makes it extremely simple to boot up other cores, request certain kernel stack/heap size, and so on. It also takes care of switching to long mode, enabling support for paging, all of which we would have to do in GRUB ourselves.
 
-### What about Rust?
+### A note on Limine's protocol
+As you have just seen, Limine works via requests and responses. This protocol allows the operating system kernel to communicate with the bootloader by setting up specific memory structures that Limine recognizes. The kernel makes requests for various system resources or information by populating designated memory areas with specific tags and parameters, and Limine responds by filling in the appropriate data structures with the requested information, such as memory maps, module locations, or hardware capabilities. This request-response architecture creates a clean interface between the bootloader and kernel, providing flexibility while maintaining compatibility across different system configurations.
 
-We initially went with Zig, but due to some unforeseen circumstances - mainly the lack of stable [async await infrastructure](https://github.com/ziglang/zig/issues/18873) - quickly pivoted to Rust. Fortunately, it turned out that Limine already had [an established option](https://crates.io/crates/limine) for booting Rust kernels, so conversion was not too bad.
+### What about Rust?
+We initially went with Zig, but due to some unforeseen circumstances - mainly the lack of stable [async await infrastructure](https://github.com/ziglang/zig/issues/18873) - quickly pivoted to Rust. Fortunately, it turned out that Limine already had [an established option](https://crates.io/crates/limine) for booting Rust kernels, so conversion was not too bad. It looks something like this:
 
 ```rust
 #![no_std]
@@ -533,8 +535,8 @@ pub fn test_runner(tests: &[&(dyn Testable + Send + Sync)]) {
 
 // Special panic handler for tests that reports failures
 pub fn test_panic_handler(info: &core::panic::PanicInfo) -> ! {
-    serial_println!("FAILED");
-    serial_println!("Error: {}\n", info);
+    println!("FAILED");
+    println!("Error: {}\n", info);
     exit_qemu(QemuExitCode::Failed);
     idle_loop();   // Should never be reached but needed for the ! return type
 }
@@ -563,14 +565,12 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
 #[cfg(test)]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    #[cfg(test)]
-    use events::run_loop;
-
-    serial_println!("!!! RUNNING LIBRARY TESTS !!!");
-    init::init();
+    println!("!!! RUNNING LIBRARY TESTS !!!");
+    // Do init
     test_main();
     unsafe {
-        run_loop(0);
+        // Run loop
+        // FOr us tests were ran on bsp
     };
 }
 
@@ -584,10 +584,12 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 
 We require 2 entry points because Rust's test framework needs separate execution contexts for kernel-level tests and library-level tests. The _start function in main.rs serves as the entry point for the entire operating system during normal execution and when testing kernel functionality in its entirety. Meanwhile, the _start function in lib.rs - only compiled during test runs - creates an isolated test environment specifically for running unit tests on library components independently from the full kernel. This dual-entry approach allows developers to test both integrated system behavior through the main entry point and isolated library components through the library entry point, all while using the same custom test framework but with appropriate scoping for what's being tested.
 
+One could also in theory support both async and standard tests, with the latter being transformed to the former via something like [Procedural Macros](https://doc.rust-lang.org/reference/procedural-macros.html). This would involve defining a new macro, traversing the token streams for whatever has been decorated with it (the proc-macros crate provides utilities to do this), and, as a naive starting point, check that the function(s) have not been marked as async. We actually did get this to work, but did not find it to be terribly useful. Most of our system ended up using async/await patterns, and the additional complexity of procedural macros for the one percent of tests was deemed to not be worthwhile to keep around.
+
 ### So how do I run this thing?
 Tests are great... assuming one could actually run them. Unfortunately, here is where our luck ran out. From brief research into OS development in Rust, a lot of people seem to favor the approach shown in [Philipp Oppermann's blog](https://os.phil-opp.com/). That is, they use the [bootimage](https://crates.io/crates/bootimage) crate, which in turn depends on [bootloader](https://crates.io/crates/bootloader).
 
-Since we chose Limine, the above resources were not an option for us. Fortunately, someone created a derivative of bootimage called, you guessed it, [limage](https://github.com/phillipg14/limage). Unfortunately, said tool was rather limited in what it did and was somewhat focused on the maintainer's hobby OS. We repurposed it, keeping the name and giving the crate a [new home](https://github.com/TAOS-Labs/limage/). The readme is mostly up-to-date, although we did develop a separate file designed to configure specifically the crate itself and the arguments it passes to qemu:
+Since we chose Limine, the above resources were not an option for us. Fortunately, someone created a derivative of bootimage called, you guessed it, [limage](https://github.com/phillipg14/limage). Unfortunately, said tool was rather limited in what it did and was somewhat focused on the maintainer's hobby OS. We repurposed it, keeping the name and giving the crate a [new home](https://github.com/TAOS-Labs/limage/). The readme is mostly up-to-date, although we did develop a separate file designed to configure specifically the crate itself and the arguments it passes to qemu. It looks something like this:
 
 ```toml
 [build]
@@ -653,10 +655,10 @@ extra_args = [
 
 This gave us the ability to define different modes our system could run in. For instance, we could type "cargo run mode terminal" and disable the graphics display, or we could ask qemu to run gdb in gui mode by typing "cargo run mode gdb-gui".
 
-Unfortunately, due to the lack of time, limage was a bit limited in what it could do. For instance, it does not currently support conditional platform flags for something like Mac versus Linux.
+Unfortunately, due to the lack of time, limage was a bit limited in what it could do. For instance, it does not currently support conditional platform flags for something like Mac versus Linux. Had we had more time, more effort would have been spent to try and repurpose the cargo run command to work with existing infrastructure like Make. Failing this, we would have added the ability to indicate whether a particular argument defined in the Limage configuration file was for Mac versus Linux.
 
 ### Automating tests
-We have had the misfortunate of merging code into main that broke tests, all because someone did not bother to verify they were still passing. Surprisingly, few resources exist online for how to make Github actions test the OS as part of a pull request. After some tinkering, we came up with the following workflow:
+We have had the misfortune of merging code into main that broke tests, all because someone did not bother to verify they were still passing. Surprisingly, few resources exist online for how to make Github actions test the OS as part of a pull request. After some tinkering, we came up with the following workflow:
 
 ```yaml
 name: Rust
@@ -758,7 +760,7 @@ jobs:
 
 The workflow consists of two jobs: lint and test. The lint job is responsible for code quality checks without actually running any code. It sets up a nightly Rust toolchain with formatting and static analysis tools like clippy. This ensures our code adheres to Rust's idioms and catches common mistakes before they make it to testing. The job runs on Ubuntu and caches dependencies to speed up subsequent runs.
 
-The test job is more interesting and tackles the challenge of testing an operating system in CI. It provisions an Ubuntu runner and installs all the necessary dependencies for building QEMU from source. We opted for building QEMU directly rather than using package manager versions because at the time of writing, Qemu version 9.2, which is what we use, does not exist on managers like apt. The job then sets up the same Rust toolchain as the lint job, installs limage, creates a blank drive for the OS to write to, and finally runs the tests. The tests boot our OS in QEMU and verify functionality in a real environment, not just through unit tests.
+The test job is more interesting and tackles the challenge of testing an operating system in CI. It provisions an Ubuntu runner and installs all the necessary dependencies for building QEMU from source. We opted for building QEMU directly rather than using package manager versions because at the time of writing, Qemu version 9.2, which is what we use, does not exist on managers like apt, or at least that was the case with Ubuntu 24. The job then sets up the same Rust toolchain as the lint job, installs limage, creates a blank drive for the OS to write to, and finally runs the tests. The tests boot our OS in QEMU and verify functionality in a real environment, not just through unit tests.
 
 It should be noted that we currently do not attempt to cache the Qemu emulator and rebuild it from scratch on every pull request or push to main. Doing so has proven to be surprisingly difficult and we decided that it was simply not worth the trouble to figure out.
 
