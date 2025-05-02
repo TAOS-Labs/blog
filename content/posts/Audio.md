@@ -1,0 +1,54 @@
++++
+title = 'Audio'
+date = 2025-05-02T12:11:00-05:00
+draft = true 
++++
+
+## Why Have Audio?
+
+Developing an operating system is a rather monstrous task with many features that are absolutely necessary for the OS to be useful. Audio is not one of those features, so why provide support for it?
+Surely if you have worked on a large project, like an OS, you have gotten the most satisfaction when you see the project have some kind of output.
+In our case the output we would have liked was to hear something. Plus, who wouldn't love to have an iconic sound play when the OS boots up?
+Another reason we decided to support audio was because one of our teammates previously inmplemented an Intel High Definition Audio (HDA) driver as a final project as a part of CS439 with Dr. Gheith.
+
+## What Hardware to Support?
+
+At the beginning of the project we choose what hardware to write drivers for based on the laptop that we were originally targetting to run on.
+However, at the point we decided to start working on audio we fully excepted that we were not going to run on hardware so we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
+Having a teammate who previously implemented an Intel HDA driver meant that we really only had one choice of the hardware to support.
+Luckily, our target laptop seems to actually use an Intel HDA audio device. Another upside to choosing this device is that it seems reather simple and we had access to the specifications for it.
+
+## Structure of the Intel HDA
+
+The specification we used while implementing our driver was the [High Definition Audio Specification Revision 1.0a](https://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/high-definition-audio-specification.pdf). Another resource we used was the [OSDev wiki for the Intel HDA](https://wiki.osdev.org/Intel_High_Definition_Audio), although I believe this entry leaves much to be desired and I may contribute to this entry when I have more time.
+The main part of the device that you will communicate with is the controller, which is done through a set of memory mapped registers. Luckily, setup and communication with the controller is rather simple, however the majority of the action is done by the codecs.
+You communicate with the codecs by sending on the Command Output Ring Buffer (CORB) and recieving responses on the Response Input Ring Buffer (RIRB) using DMA.
+A codec typically represents a connection to an actual device connected to the machine (things like speakers or microphones). The way audio data is communicated with the codecs is with streams which are either input, output, or bidirectional.
+### Codec Architecture
+Each codec is characterized by a set of nodes organized in a hierarchical tree structure whith a single *root node*. The root node provides "pointers" to the next level of nodes with compromises the *function group(s)* that comprise the codec. A function group is a collection of modules with a specific purpose, these modules are called *widgets*.
+The function group that we are interested in is the Audio Function Group (AFG). Luckily for us, the HDA implemented in qemu only has one codec and the only function group it has is the AFG.
+Figure 50 of the HDA specs provides a pretty helpful diagram for understanding the architecture of the codecs.
+
+![](/public/images/audio_post/codec_structure.png)
+
+Understanding the structure of the codec is crucial so we know how to determine the capabilities of and configure each codec.
+
+## What Our Driver can Do
+
+Taking into account the limited time remaining in the semester, finals, projects, and last minute assignments, we could not spend too much time to make our implementation super robust.  
+Currently our driver does the following upon initialization of devices:
+-   Initializes audio device
+    -   Sets some global control registers
+    -   Initializes the Command Output Ring Buffer (CORB)
+    -   Initializes the Response Input Ring Buffer (RIRB)
+-   Initializes the codecs and finds the proper nodes that we should use for output
+-   Plays audio as a test, assuming you uncommented the line that does so
+
+Unfortunately the kinds of audio we can play is quite rescricted. Currently we can only play small mono wav files. The restriction on size is due to how we load the wav file into our kernel to get the data to play.
+Currently, we just include the actual data with our kernel when it boots, so we are limited by the size of the kernel heap that we initialize with. This restricts the total size of the files that we can play. To get the files to fit you have the option of either limiting the length of the song or compressing it.
+There are also many aspects of our driver that are "hard coded" to work with qemu.
+
+## Challenges we faced
+
+Most of the challenges we faced were due to the lack of debugging information the qemu provides for the sound card. We got around this by compiling the [qemu source code](https://github.com/qemu/qemu) enabling some debug information that is normally not printed. One other thing that we struggled with was reading the specifications and determining the different commands that can be used.
+The OSDev wiki entry does list some *verbs*, another term for commands, but the way the data should be formatted and how the response look are underspecified. We did eventually did find the definitions for the verbs in the specs in section 7.3.3
