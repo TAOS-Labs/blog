@@ -138,9 +138,9 @@ which were 0x1FF for normal interrupts, and 0x0FB for error interrupts
 Now, even though we are only running in QEMU, QEMU is pretending to be an 
 SD Card, so we need to negotiate how much power to give the SD Card.
 So step 1 will be to read the SD cards capabilities (at offset 0x40) and 
-then see what voltage is supported. Then you will find the power controll
+then see what voltage is supported. Then you will find the power control
 register (at offset 0x29) and write 0 to it, turning off power, and then 
-you can write the bit pattern represneting the maximum voltage supported 
+you can write the bit pattern representing the maximum voltage supported 
 in the capabilities register. After that write, you can or that value with 1
 and then write it again (see why we needed volatile writes)
 
@@ -158,24 +158,24 @@ controller 4),  we then write to the clock control register
 
 ### Enable time outs
 
-You can just max out the timeout paramater (register is 0x2e)
+You can just max out the timeout parameter (register is 0x2e)
 
 ### Actually Start it up
 
-Now we follow the great and lovely flowcharts, They are great, so follw 
+Now we follow the great and lovely flowcharts, They are great, so follow 
 Section 3.6. To note when you send commands the response of the command 
 is in register 0x10, and it may be  either a 32 bit response, or a 128
 bit register. When sending a command you also need to know its response 
-type, which we get from the phtsical layer specificiation. This alo 
+type, which we get from the physical layer specification. This alo 
 determines flags to send to the sd card.
 
 ### Get Data
 
 Now that everything is finished we can set block size and block count, 
-then, we will write the sector to the argument regiter, and set the 
+then, we will write the sector to the argument register, and set the 
 transfer mode. Then we can send the sd command to read / write blocks
 and wait for buffer read / write ready interrupt to be generated, and we 
-can acklogege these by writing a 1 to that register position. then since 
+can acknowledge these by writing a 1 to that register position. then since 
 we are not using DMA we can just read the data from the buffer data port 
 register
 
@@ -184,11 +184,11 @@ register
 Once you have the Block Device you need to communicate with who ever is 
 working on the filesystem. You should keep in mind that copying data is bad
 and try and reduce copies of data as much as possible. You might also want
-an abstraction layer between sectior numbers, and block numbers, and 
+an abstraction layer between sector numbers, and block numbers, and 
 partitions
 
 ## Making it fast(er)
 
 Now if something is not as fast as you hoped, one thing that can work is
 getting multiple blocks at a time. In my testing, getting 8 blocks at a 
-time doubled my speed compared to without stuff
+time doubled my speed compared to getting only one block at a time.  
