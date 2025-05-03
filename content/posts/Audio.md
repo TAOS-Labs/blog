@@ -15,7 +15,7 @@ Another reason we decided to support audio was because one of our teammates prev
 ## What Hardware to Support?
 
 At the beginning of the project we chose what hardware to write drivers for based on the laptop that we were originally targetting to run on.
-However, at the point we decided to start working on audio, we fully excepted that we were not going to run on hardware. This we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
+However, at the point we decided to start working on audio, we fully accpted that we were not going to run on hardware. This meant we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
 Having a teammate who previously implemented an Intel HDA driver meant that we really only had one choice of the hardware to support.
 Luckily, our target laptop seems to actually use an Intel HDA audio device. Another upside to choosing this device is that it seems reather simple and we had access to the specifications for it.
 
@@ -32,7 +32,7 @@ Each codec is characterized by a set of nodes organized in a hierarchical tree s
 The function group that we are interested in is the Audio Function Group (AFG). Luckily for us, the HDA implemented in qemu only has one codec and the only function group it has is the AFG.
 Figure 50 of the HDA specs provides a pretty helpful diagram for understanding the architecture of the codecs.
 
-![](/public/images/audio_post/codec_structure.png)
+![](/images/audio_post/codec_structure.png)
 
 Understanding the structure of the codec is crucial so we know how to determine the capabilities of and configure each codec.
 
@@ -47,11 +47,11 @@ Currently our driver does the following upon initialization of devices:
 -   Initializes the codecs and finds the proper nodes that we should use for output
 -   Plays audio as a test, assuming you uncommented the line that does so
 
-Unfortunately the kinds of audio we can play is quite rescricted. Currently we can only play small mono wav files. The restriction on size is due to how we load the wav file into our kernel to get the data to play.
+Unfortunately the kinds of audio we can play is quite restricted. Currently we can only play small mono wav files. The restriction on size is due to how we load the wav file into our kernel to get the data to play.
 Currently, we just include the actual data with our kernel when it boots, so we are limited by the size of the kernel heap that we initialize with. This restricts the total size of the files that we can play. To get the files to fit you have the option of either limiting the length of the song or compressing it.
 There are also many aspects of our driver that are "hard coded" to work with qemu.
 
-## Challenges we faced
+## Challenges we Faced
 
 Most of the challenges we faced were due to the lack of debugging information the qemu provides for the sound card. We got around this by compiling the [qemu source code](https://github.com/qemu/qemu) enabling some debug information that is normally not printed. Qemu also does not fully implement the hardware, some commands that are supposed to change things in the hardware just simply don't do anything. However, this is only a small issue that only caused trouble once.  
 One other thing that we struggled with was reading the specifications and determining the different commands that can be used.
@@ -88,12 +88,12 @@ This is the hard step and requires a strong understanding of the structure of th
 5. Find and store the paths that attach these output nodes to DACs.
     - The section on OSDev labeled "Finding all useful paths through the codec" provides a useful algorithm for this.
 
-The OSDev wiki had a couple more steps but we were able to get away with using pretty much just these steps.
+The OSDev wiki had a couple more steps but we were able to get away with mainly using the steps outlined above.
 
 ### Playing Audio through a Stream
 
 In order to play audio you need to configure a stream descriptor with a Buffer Descriptor List (BDL) and tell the audio output node the format of the audio data and the stream number the data is on.
-To configure the stream descriptor you pretty much just need to go down the list of the registers in the stream descriptor and fill out all of the necessary data. Once this is done and you turn the stream on, by setting the run bit of the stream descriptor control register, you should hear audio.
+To configure the stream descriptor you essentially just need to go down the list of the registers in the stream descriptor and fill out all of the necessary data. Once this is done and you turn the stream on, by setting the run bit of the stream descriptor control register, you should hear audio.
 
 ## What's Next?
 
@@ -108,6 +108,6 @@ I would also like to give users the capability to play sounds using our device (
 
 ## Conclusion
 
-Over the course of this project I learned a lot about how device drivers actually work. Even though none of the device drivers I helped with are particularly robust, I believe that I have learnt enough to add the right features to properly integrate the drivers with the rest of the OS. One thing that was surprising to me was that telling the device what to do was actually not that hard. That part was relatively simple assuming you have access to the specifications for the device.
+Over the course of this project I learned a lot about how device drivers actually work. Even though none of the device drivers I helped with are particularly robust, I believe that I have learned enough to add the right features to properly integrate the drivers with the rest of the OS. One thing that was surprising to me was that telling the device what to do was actually not that hard. That part was relatively simple assuming you have access to the specifications for the device.
 
 If you have any questions about the HDA driver or just drivers in general, you can contact me at wyattborden@gmail.com.
