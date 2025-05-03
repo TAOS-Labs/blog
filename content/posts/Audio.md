@@ -15,7 +15,7 @@ Another reason we decided to support audio was because one of our teammates prev
 ## What Hardware to Support?
 
 At the beginning of the project we chose what hardware to write drivers for based on the laptop that we were originally targetting to run on.
-However, at the point we decided to start working on audio, we fully accpted that we were not going to run on hardware. This meant we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
+However, at the point we decided to start working on audio, we fully accepted that we were not going to run on hardware. This meant we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
 Having a teammate who previously implemented an Intel HDA driver meant that we really only had one choice of the hardware to support.
 Luckily, our target laptop seems to actually use an Intel HDA audio device. Another upside to choosing this device is that it seems reather simple and we had access to the specifications for it.
 
