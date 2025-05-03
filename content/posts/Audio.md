@@ -2,6 +2,7 @@
 title = 'Audio'
 date = 2025-05-02T12:11:00-05:00
 draft = true 
+author = 'Wyatt Borden'
 +++
 
 ## Why Have Audio?
@@ -51,4 +52,6 @@ There are also many aspects of our driver that are "hard coded" to work with qem
 ## Challenges we faced
 
 Most of the challenges we faced were due to the lack of debugging information the qemu provides for the sound card. We got around this by compiling the [qemu source code](https://github.com/qemu/qemu) enabling some debug information that is normally not printed. One other thing that we struggled with was reading the specifications and determining the different commands that can be used.
-The OSDev wiki entry does list some *verbs*, another term for commands, but the way the data should be formatted and how the response look are underspecified. We did eventually did find the definitions for the verbs in the specs in section 7.3.3
+The OSDev wiki entry does list some *verbs*, another term for commands, but the way the data should be formatted and how the response look are underspecified. We did eventually did find the definitions for the verbs in the specs in section 7.3.3.
+Another challenge was the code we were referencing was very hardcoded and took many shortcuts.
+
