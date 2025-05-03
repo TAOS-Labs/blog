@@ -2,18 +2,23 @@
 
 # Handling Page Faults with MMAP
 
-
-The page fault handler is one of the more complex parts of implementing a virtual memory system with mmap. However, there's surprisingly little information online about how to adequately handle all the different types of page faults you can get with mmap(). There are several different cases to handle depending on the type of mapping being used. Let's first review the different types of mappings that you must support when implementing mmap().
+Virtual memory systems that utilize memory mapping (mmap) functionality require complex page fault handling to support various mapping types and access patterns. In this article we will talk about how to build a page fault handler for mmap, with a particular focus on the different mapping types (anonymous and file-backed), sharing modes (private and shared), and the six distinct page fault scenarios that must be handled correctly. We will also explore the page cache, how lazy loading is done, and Copy-on-Write (COW) semantics to better understand why certain page fault causes exist and how to fix them.
 
 
 ### Types of Mappings
 
+Here are the different types of mappings you can do with mmap(). These cover whether the memory
+mapped region maps a file versus just a region of virtual memory, and whether that region is
+shared between multiple processes or not. The type of the mapping directly affects how to handle
+page faults, as various combinations of the four types of mappings require specific handling.
 
 - Anonymous Mappings
-Anonymous mappings are not backed by any file. They simply represent a portion of memory that is zero-initialized. These regions of memory can be used for memory allocations by functions such as malloc that generally use mmap for larger allocations rather than using sbrk. This is done to help reduce the negative effects of memory fragmentation when large blocks of memory are freed but fragmented due to smaller allocated blocks lying in between them [[1]](#1).
+
+Anonymous mappings are not backed by any file. They simply represent a portion of memory that is zero-initialized. These regions of memory can be used for memory allocations by functions such as malloc that generally use mmap for larger allocations rather than using sbrk. This is done to help reduce the negative effects of memory fragmentation when large blocks of memory are freed but fragmented due to smaller allocated blocks lying in between them [[1]](https://www.linuxjournal.com/article/6390).
 
 
 - File-backed Mappings
+
 File-backed mappings represent a portion of a file that is loaded into memory. Depending on the type of the mapping, changes made to this memory region may or may not be reflected back onto the file itself on disk. File-backed mappings are used to allow for more efficient access to file data since the files are loaded into memory. Furthermore, files are loaded on demand, meaning only the portion of the file that is trying to be accessed is actually loaded into memory. File-backed mappings are commonly used for loading shared object files for dynamic linking, loading executable files, and whenever a file needs to be read from memory rather than from disk.
 
 
@@ -21,6 +26,7 @@ There are also two different relevant sharing modes that can change the behavior
 
 
 - Private mappings
+
 When a mapping is private it means that a process has its own isolated view of that mapped region of memory. When the region of memory is initially created, physical frames of memory are not immediately duplicated. Instead, they are loaded on-demand. Furthermore, when the kernel creates page table entries for the mapped pages of memory, they are always initially set to read only. When a process tries to write to a mapped page, it will then trigger a page fault due to a permissions violation, which is handled through Copy-on-Write (COW) semantics which will be discussed further in the page fault section.
 
 
@@ -28,6 +34,7 @@ The implementation differs between anonymous and file-backed mappings. For an an
 
 
 - Shared mappings
+
 When a mapping is shared it means that any change to that mapped memory region is visible to all processes that map the same file/physical memory. Since the mappings are shared, there are now COW semantics - when a modification is made, the modifications directly affect all shared pages. These changes are also immediately visible to all processes that map the same region.
 
 
@@ -36,7 +43,7 @@ For file-backed shared mappings, this requires a page cache integration, where m
 
 ### The Page Cache
 
-The page cache is a vital part of managing file-backed mappings with mmap. In our kernel, the page cache is defined as follows:
+The page cache is a vital part of managing file-backed mappings with mmap. It serves as an in-memory buffer for file contents, allowing multiple processes to efficiently share access to the same file data while minimizing expensive disk operations by keeping frequently accessed pages in RAM. In our kernel, the page cache is defined as follows:
 
 
 ```rust
@@ -45,13 +52,16 @@ type PageCache = Mutex<BTreeMap<u32, Arc<Mutex<BTreeMap<usize, Page<Size4KiB>>>>
 
 
 The outer BTreeMap maps inode numbers to inner BTreeMaps, creating a unique mapping between files and flie mappings. The inner BTreeMap maps file offsets to pages of memory. This way, we have a per-file data structure that can lazy-load pages of memory that map parts of a file. The offset dictates which portion of the file is mapped by the relevant page. When a process tries to access a file-backed mapping for the first time, the kernel will index into the page cache, first by the inode number of the relevant file, and then by the position within the file that is being accessed (this is stored as metadata in a File struct that represents a file). If the kernel is able to find the entry, then the operating system can simply map the already existing page in this process' address space. If not, a new entry can be created after reading the relevant page of data for the file from disk.
-Lazy Loading and Page Faults
+
+### Lazy Loading and Page Faults
 
 
 The key to an implementation of mmap() is lazy loading. When a process calls mmap(), no memory is immediately allocated for anonymous mappings or read from disk for file-backed mappings. The mapping is simply recorded as a virtual memory area, which contains the start and end of the memory region, the backing (see the post exploring the data structures used in our mmap() implementation), and other metadata related to permissions. When a process tries to access data, it will immediately page fault since no memory is actually allocated. This way, only when memory is actually needed will it ever be allocated or read from disk.
 
 
-The Page fault handler handles six different types of page faults that can occur.
+The Page fault handler handles six different types of page faults that can occur. For more
+information on the specific data structures used to manage virtual memory areas and backings, see
+the post explaining the data structures used in the mmap() implementation.
 
 
 ```rust
@@ -149,10 +159,8 @@ The fifth fault is when you have a COW fault. A COW fault occurs when the memory
 
 The sixth and final fault cause happens when you do not have a COW fault but the page fault was caused by a write. We simply update the permissions for the page containing the faulting address to give the faulting process write permissions.
 
+These six types of page faults encompass the different reasons you may page fault when using
+mmap() to manage virtual memory.
+
 
 For a detailed look at the code required to implement the page fault handler, take a look at the source code for the TAOS kernel. The most relevant parts are the [page fault handler](https://github.com/TAOS-Labs/TAOS/blob/main/kernel/src/interrupts/idt.rs#L148) itself and the implementations of the fault cause determiner and the fixes for each possible page fault variation located [here](https://github.com/TAOS-Labs/TAOS/blob/main/kernel/src/memory/page_fault.rs).
-
-# References
-
-<a id="1">[1]</a>
-https://www.linuxjournal.com/article/6390
