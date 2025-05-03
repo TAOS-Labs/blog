@@ -60,12 +60,12 @@ The outer BTreeMap maps inode numbers to inner BTreeMaps, creating a unique mapp
 ### Lazy Loading and Page Faults
 
 
-The key to the implementation of mmap() is lazy loading. When a process calls mmap(), no memory is immediately allocated for anonymous mappings or read from disk for file-backed mappings. The mapping is simply recorded as a virtual memory area, which contains the start and end of the memory region, the backing (see the post exploring the data structures used in our mmap() implementation), and other metadata related to permissions. When a process tries to access data, it will immediately page fault since no memory is allocated. This way, only when memory is needed will it ever be allocated or read from disk.
+The key to the implementation of mmap() is lazy loading. When a process calls mmap(), no memory is immediately allocated for anonymous mappings or read from disk for file-backed mappings. The mapping is simply recorded as a virtual memory area, which contains the start and end of the memory region, the backing (see the [post](https://github.com/TAOS-Labs/blog/blob/main/content/posts/vm.md) exploring the data structures used in our mmap() implementation), and other metadata related to permissions. When a process tries to access data, it will immediately page fault since no memory is allocated. This way, only when memory is needed will it ever be allocated or read from disk.
 
 
 The Page fault handler handles six different types of page faults that can occur. For more
 information on the specific data structures used to manage virtual memory areas and backings see
-the post explaining the data structures used in the mmap() implementation.
+the [post](https://github.com/TAOS-Labs/blog/blob/main/content/posts/vm.md) explaining the data structures used in the mmap() implementation.
 
 
 ```rust
