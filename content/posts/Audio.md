@@ -14,8 +14,8 @@ Another reason we decided to support audio was because one of our teammates prev
 
 ## What Hardware to Support?
 
-At the beginning of the project we choose what hardware to write drivers for based on the laptop that we were originally targetting to run on.
-However, at the point we decided to start working on audio we fully excepted that we were not going to run on hardware so we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
+At the beginning of the project we chose what hardware to write drivers for based on the laptop that we were originally targetting to run on.
+However, at the point we decided to start working on audio, we fully excepted that we were not going to run on hardware. This we could write drivers for whatever hardware was supported on [qemu](https://www.qemu.org/docs/master/system/device-emulation.html#emulated-devices).
 Having a teammate who previously implemented an Intel HDA driver meant that we really only had one choice of the hardware to support.
 Luckily, our target laptop seems to actually use an Intel HDA audio device. Another upside to choosing this device is that it seems reather simple and we had access to the specifications for it.
 
@@ -97,7 +97,7 @@ To configure the stream descriptor you pretty much just need to go down the list
 
 ## What's Next?
 
-Even though we can play audio, I am a little unhappy about the state of the code. I would like to refactor some of it to remove some unused bits/use some things that we should be using.
+Even though we can play audio, I am a little unhappy about the state of the code. I would like to refactor some of it to remove some unused parts/use some things that we should be using.
 
 As previously mentioned, we use double buffering to play files that exceed one full BDL. This leads to a small blip in the audio when we are switching the buffers.
 After doing a little bit of reasearch, it seems that the way it should be done is by filling in entries that have already been read as the audio plays. This works because when the stream reaches the last entry of the BDL, it loops back to the first entry and continues.
