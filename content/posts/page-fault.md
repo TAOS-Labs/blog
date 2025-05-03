@@ -1,4 +1,9 @@
-+++ title = 'Page Faults and MMAP' date = 2025-05-02T18:26:52-05:00 draft = false author = 'Pranay Gosar' +++
++++
+title = 'Page Faults and MMAP'
+date = 2025-05-02T18:26:52-05:00 
+draft = false
+author = 'Pranay Gosar' 
++++
 
 # Handling Page Faults with MMAP
 
